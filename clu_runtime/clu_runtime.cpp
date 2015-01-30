@@ -878,8 +878,9 @@ const char * CLU_API_CALL cluGetBuildErrors(cl_program in_program)
 //-----------------------------------------------------------------------------
 cl_program CLU_API_CALL
 cluBuildSource(const char* in_source,
-              size_t source_length, /* may be zero */
-              cl_int * errcode_ret) /* may be NULL */
+              size_t source_length,        /* may be zero */
+              const char* compile_options, /* may be NULL */
+              cl_int * errcode_ret)        /* may be NULL */
 {
     cl_program program = 0;
     cl_int status = CL_INVALID_VALUE;
@@ -892,8 +893,11 @@ cluBuildSource(const char* in_source,
 
     try
     {
-        const char* buildOptions = CLU_Runtime::Get().GetBuildOptions();
-        program = CLU_Runtime::Get().BuildProgram(1, &in_source, pLength, buildOptions, &status);
+        if (0 == compile_options)
+        {
+            compile_options = CLU_Runtime::Get().GetBuildOptions();
+        }
+        program = CLU_Runtime::Get().BuildProgram(1, &in_source, pLength, compile_options, &status);
     }
     catch (...) // internal error, e.g. thrown by STL
     {
@@ -913,7 +917,8 @@ cluBuildSource(const char* in_source,
 cl_program CLU_API_CALL
 cluBuildBinary(size_t binary_length,
               const unsigned char* in_binary,
-              cl_int * errcode_ret) /* may be NULL */
+              const char* compile_options, /* may be NULL */
+              cl_int * errcode_ret)        /* may be NULL */
 {
     cl_program program = 0;
     cl_int status = CL_INVALID_VALUE;
@@ -926,8 +931,11 @@ cluBuildBinary(size_t binary_length,
 
     try
     {
-        const char* buildOptions = CLU_Runtime::Get().GetBuildOptions();
-        program = CLU_Runtime::Get().BuildProgram(1, pLength, &in_binary, buildOptions, &status);
+        if (0 == compile_options)
+        {
+            compile_options = CLU_Runtime::Get().GetBuildOptions();
+        }
+        program = CLU_Runtime::Get().BuildProgram(1, pLength, &in_binary, compile_options, &status);
     }
     catch (...) // internal error, e.g. thrown by STL
     {
@@ -1037,7 +1045,9 @@ cluBuildBinaryArray(cl_uint num_binaries,
 // convert a source file into a cl_program
 //-----------------------------------------------------------------------------
 cl_program CLU_API_CALL
-cluBuildSourceFromFile(const char* in_pFileName, cl_int * errcode_ret)
+cluBuildSourceFromFile(const char* in_pFileName, 
+                       const char* compile_options, /* may be NULL */
+                       cl_int * errcode_ret)        /* may be NULL */
 {
     cl_int status = CL_INVALID_VALUE;
     cl_program program = 0;
@@ -1049,7 +1059,7 @@ cluBuildSourceFromFile(const char* in_pFileName, cl_int * errcode_ret)
             if (ifs.is_open())
             {
                 std::string s((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-                program = cluBuildSource((const char *) s.c_str(), s.size(), &status);
+                program = cluBuildSource((const char *) s.c_str(), s.size(), compile_options, &status);
                 ifs.close();
             }
         } // end if non-null file name string
@@ -1070,7 +1080,9 @@ cluBuildSourceFromFile(const char* in_pFileName, cl_int * errcode_ret)
 // convert a binary file into a cl_program
 //-----------------------------------------------------------------------------
 cl_program CLU_API_CALL
-cluBuildBinaryFromFile(const char* in_pFileName, cl_int * errcode_ret)
+cluBuildBinaryFromFile(const char* in_pFileName, 
+                      const char* compile_options, /* may be NULL */
+                      cl_int * errcode_ret)        /* may be NULL */
 {
     cl_int status = CL_INVALID_VALUE;
     cl_program program = 0;
@@ -1082,7 +1094,7 @@ cluBuildBinaryFromFile(const char* in_pFileName, cl_int * errcode_ret)
             if (ifs.is_open())
             {
                 std::string s((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-                program = cluBuildBinary(s.size(), (const unsigned char *) s.c_str(), &status);
+                program = cluBuildBinary(s.size(), (const unsigned char *) s.c_str(), compile_options, &status);
                 ifs.close();
             }
         } // end if non-null file name string
